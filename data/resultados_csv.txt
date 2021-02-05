@@ -1,0 +1,17 @@
+balance_gobierno.csv
+capital.csv
+cash_bill.csv
+consumo_real_efectivo.csv
+demanda_gobierno.csv
+ganancias.csv
+gini.csv
+normalized_avg_price.csv
+porcentaje_pobocup_sectorsubs.csv
+precio_promedio.csv
+producto.csv
+producto_sector_k.csv
+resultados_csv.txt
+salarios.csv
+share_profits.csv
+share_wage.csv
+tasa_desempleo.csv

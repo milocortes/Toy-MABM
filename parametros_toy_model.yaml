@@ -1,0 +1,71 @@
+
+simulacion:
+  experimentos: 5
+  periodos: 50
+
+parametros:
+  # Número de hogares
+  n_households : 1000
+  # Número de empresas de bienes de consumo
+  n_firms : 100
+  # Número de empreas de bienes de capital
+  n_firms_capital : 20
+  # Propensión a consumir sobre el ingreso
+  propension_ingreso : 0.8
+  # Propensión a consumir sobre la riqueza
+  propension_riqueza : 0.2
+  # Tasa de impuestos
+  tau : 0.2
+  # Gasto real del gobierno
+  gExogenous : 100
+  # Salarios
+  wageExogenous : 2
+  # Capital
+  init_capital : 200
+  # Costo de ajuste
+  adjustment_costs : 0.25
+  # Peso de cada periodo en la depreciación
+  weight_depretiation : 0.2
+  # Tasa de depreciación de las empresas de consumo
+  depretiation_rate : 0.1
+  # Tasa de depreciación de las empresas de capital
+  k_depretiation_rate : 0.1
+  # Sensibilidad de la expectativa de producción
+  nu : 0.05
+  # Tasa mínima de inventarios deseados
+  delta_min : 0
+  # Tasa máxima de inventarios deseados
+  delta_max : 0
+  # Productividad del capital
+  kappa : 0.5
+  # Long run rate of capacity utilization
+  omega_long_run : 0.85
+  # Precios
+  priceExogenous : 2
+  # Markup
+  markup : 0.2
+  # Markup mínimo
+  markupMin : 0.15
+  # Markup máximo
+  markupMax : 0.25
+  # Tasa de interés anual
+  interest_rate_anual : 0.1
+  # Tasa de interés objetivo del BC
+  interest_rate_bc : 0.05
+  # Reserve ratio
+  reserve_ratio : 0.06
+  # Capital inicial
+  capital_inicial_bancos : 300
+  # Años a pagar el crédito
+  anios_pagar : 3
+  # Precio promedio de las empresas de consumo
+  avg_price : 0
+  # Precio promedio de las empresas de capital
+  k_average_price : 0
+  # Número de empresas de capital visitadas
+  parMatchingKFirms : 2
+  # Productividad del trabajo de las empresas de bienes de consumo y de capital
+  alpha:
+    start: 0.4
+    step: 0.2
+    stop: 1.1

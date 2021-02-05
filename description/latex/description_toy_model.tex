@@ -1,0 +1,435 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{mathtools}
+%% Para modificar los márgenes
+\usepackage{geometry}
+%% Para incluir item en las celdas de la tabla
+\usepackage{booktabs}% http://ctan.org/pkg/booktabs
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+%% Para incluir longtables
+\usepackage{longtable}
+%% Para insertar páginas horizontales
+\usepackage{pdflscape}
+\author{Hermilo}
+\title{Toy ABM}
+\begin{document}
+\sffamily
+\maketitle
+
+\section{Introducción}
+La modelación en macroeconomía tradicionalmente se ha centrado en el análisis econométrico de series de tiempo y en los modelos de Equilibrio General Dinámicos y Estocásticos (DGSE), este último fincado en el enfoque del agente representativo.
+
+Un enfoque alternativo es el que concibe a la economía como un sistema complejo \cite{colander2004changing}. De forma particular, \textit{Agent-based Computational Economics} (ACE) es la aplicación de la Modelación Basada en Agentes en economía \cite{tesfatsion2006agent}. Una rama de ACE es \textit{macroeconomic ABMs} (MABMs) los cuales están enfocados a la dinámica de variables económicas agregadas, tales como el PIB, el consumo, la inversión, etc. Estos modelos capturan explícitamente la interacción de distintos tipos de agentes económicos heterogéneos a un nivel micro y permiten calcular las variables agregadas \textit{from the bottom up}.
+
+\section{Modelo}
+
+El modelo está integrado por(Ver Cuadro \ref{tab:agentes}):
+
+\begin{itemize}
+\item \textbf{Hogares}: venden su trabajo a las empresas y reciben salarios, consumen y ahorran en forma de depósitos bancarios. Los hogares pagan impuestos sobre sus ingresos brutos.
+\item \textbf{Empresas}: Existen dos tipos de de empresas, las que producen capital y las que producen bienes de consumo. En todos los casos empresas pueden solicitar préstamos a los bancos para financiar la producción y la inversión. Las ganancias retenidas se mantienen en forma de depósitos bancarios.
+\begin{itemize}
+\item \textbf{Empresas de capital}: Producen un bien de capital homogéneo únicamente usando trabajo. 
+\item \textbf{Empresas de bienes de consumo}: Existen dos tipos de empresa de consumo, las que se encuentran en el sector moderno y en el sector informal o de subsistencia:
+\begin{itemize}
+\item  \textbf{Sector Moderno}: Producen un bien de consumo homogéneo utilizando mano de obra y bienes de capital fabricados por empresas de capital.
+\item  \textbf{Sector informal o de subsistencia}: Produce un bien de consumo homogéneo únicamente con trabajo.
+\end{itemize}
+\end{itemize}
+
+\item \textbf{Gobierno}: Cobra impuestos y consume a las empresas de bienes de consumo.
+\item \textbf{Bancos}: Recaudan depósitos de los hogares y empresas. Otorgan préstamos a las empresas. 
+ 
+\end{itemize}
+
+Las reglas de comportamiento se basan en de distintos trabajos en MABM, entre los que se destacan los de \cite{caiani2016agent},\cite{assenza2015emergent} y \cite{DAWID201863}.
+
+
+\subsection{Reglas de comportamiento de los agentes}
+
+\subsubsection{Empresas}
+\textbf{\textit{Planeación de la oferta}}
+\vspace{.2cm}
+
+Al final de periodo $t$, una vez que las transacciones se han realizado, las ventas actuales obtenidas por las empresas son $Q_{i,t}=\min(Y_{i,t},C_{i,t})$. Si $Q_{i,t}= C_{i,t} < Y_{i,t}$, habrían un inventario igual a $\Delta_{i,t-1}=Y_{i,t}-C_{i,t}>0$. Los inventarios deseados pueden estar en el intervalo $\Delta_{i,t} \in [\Delta_{i,t}^m,\Delta_{i,t}^M]$.
+
+Las empresas calculan su \textit{expectativa de demanda futura} $Y_{i,t}^e$ con la propuesta de \cite{DAWID201863}, donde $\eta^y$ es un parámetro positivo para el cual $\eta^y \in (0,1)$. Para el caso que $\Delta_{i,t}^m=\Delta_{i,t}^M=0$, si $\Delta_{i,t-1} < 0$, la demanda es más alta que la producción in $t$ y la empresa revisa la demanda esperada y la producción deseada al alza. Por el contrario, sí $\Delta_{i,t-1} > 0$ la demanda esperada y la producción deseada se revisan a la baja.  
+
+\begin{equation}
+  Y_{i,t}^e =
+    \begin{cases}
+      Y_{i,t-1}(1 + \eta^y) & \text{si $\Delta_{i,t-1} < \Delta_{i,t}^m$ y $P_{i,t-1} > P_{t-1}$}\\
+      Y_{i,t-1}(1 - \eta^y) & \text{si $\Delta_{i,t-1} > \Delta_{i,t}^M$ y $P_{i,t-1} < P_{t-1}$ }
+      
+    \end{cases}       
+\end{equation}
+
+\subsubsection{Empresas de consumo en el sector moderno}
+\textbf{\textit{Planeación de la producción}}
+\vspace{.2cm}
+
+La empresas $m$ en el sector moderno de la economía producen $Y_{m,t}$ con capital $K_{m,t}$ y trabajo $L_{m,t}$ mediante una \textit{función de producción de Leontief}:
+
+\begin{equation}
+Y_{m,t}= \min(\alpha N_{m,t},\kappa K_{m,t})      
+\end{equation}
+
+Donde $\alpha$ y $\kappa$ son las productividades de trabajo y capital, los cuales son exógenos, constantes y se distribuyen de forma uniforme entre las empresas del sector moderno. Si se asume que el trabajo es abundante, tenemos que $Y_{m,t}=\kappa K_{m,t}$. Los requerimientos laborales con la plena utilización de la capacidad instalada (\textit{i.e.} el nivel técnicamente eficiente de empleo) es igual a $N_{m,t}=(\frac{\kappa}{\alpha})K_{m,t}$ donde $\frac{\kappa}{\alpha}$ es el recíproco de la razón capital-trabajo.
+
+Cuando la capacidad instalada no es completamente utilizada, sólo una fracción $\omega_{m,t}$ (\textit{tasa de utilización de la capacidad}) del stock de capital será utilizada en la producción. De manera que la producción sería:
+
+\begin{equation}
+Y_{m,t}= \omega_{i,t}\kappa K_{m,t}
+\end{equation}
+
+mientras que la demanda de trabajo sería $N_{m,t}= (\frac{\kappa}{\alpha})\omega_{m,t} K_{m,t}$.
+
+El capital físico se deprecia a una tasa $\delta \in (0,1)$. Sólo el capital que es efectivamente consumido es el que se deprecia. De manera que la actualización del capital instalado de la empresa $m$ sería :
+
+\begin{equation}
+K_{m,t+1}=(1-\delta \omega_{m,t}) K_{i,t} + I_{m,t}
+\end{equation}
+
+Donde $\delta \omega_{m,t}$ es la tasa actual de depreciación y la inversión es $I_{m,t}$.
+
+\vspace{.2cm}
+\textbf{Inversión}
+\vspace{.2cm}
+
+Al inicio del periodo $t$, las empresas en $m$ deben decidir la cantida de inversión $I_{m,t}$, la cual les permite ajustar su stock de capital. Hay incertidumbre en torno a la cantidad de capital que necesita la empresa para realizar la producción futura, puesto que la información actual que dispone es incompleta en la medida que aún no se sabe si la producción en $t$ coincidió con la demanda. 
+
+Sí no hubiera inversión, el capital se reduciría debido a su uso en la producción. Las empresas tienen que generar expectativas sobre la inversión necesitada para reponer el capital desgastado. La inversión planeada para remplazar el capital depreciado es :
+
+\begin{equation}
+I_{m,t}^r= \dfrac{\delta}{\gamma} \; \bar{K}_{m,t-1}
+\end{equation}
+
+Donde $\bar{K}_{m,t-1}$ representa una evaluación del stock de capital que ha usado en \textit{promedio}
+
+\[\bar{K}_{m,t-1}= \nu \bar{K}_{m,t-2}+ (1-\nu) \omega_{m,t-1}K_{i,t-1} \; \; \; \; \text{donde $\nu \in (0,1)$}\] 
+
+Además, la empresa tiene que decidir la adición neta de capital. Para lograrlo, la empresa utiliza la \textit{tasa deseada de utilización de capital a largo plazo}, $\bar{\omega}$. De manera que el capital deseado en la etapa de inversión $t$ para $t+1$ es $\frac{\bar{K}_{i,t-1}}{\bar{\omega}}$.
+
+Por lo tanto, la inversión total sería:
+
+\begin{equation}
+I_{m,t}= \Big ( \dfrac{1}{\bar{\omega}} + \dfrac{\delta}{\gamma} \Big) \; \bar{K}_{m,t-1} - \;K_{m,t}
+\end{equation}
+
+Sustituyendo $(6)$ en $(4)$ y ordenando términos, tenemos :
+
+\begin{equation}
+K_{m,t+1} = \Big ( \dfrac{1}{\bar{\omega}} + \dfrac{\delta}{\gamma} \Big) \; \bar{K}_{m,t-1} - \delta \omega_{m,t}\;K_{m,t}
+\end{equation}
+
+\subsubsection{Empresas de capital}
+
+Las empresas producen bienes de capital (sector-K) que son consumidos por las empresas del sector moderno que producen bienes de consumo. Al igual que las empresas de bienes de consumo, se supone que las empreas de capital operan en un mercado imperfecto de manera que tanto la producción como los precios son determinados al seguir reglas adaptativas.
+
+Prácticamente estas reglas son las mismas que para las empresas de consumo.La diferencia radica en que como los bienes de capital son bienes durables, esas empresas pueden usar los inventarios para satisfacer la demanda actual. El nivel de inventarios que están disponibles en $t$ será denotado por $Y_{j,t}^k$. 
+
+Al inicio del momento $t$ la empresa $j$ del sector de bienes de capital ($j =1, \hdots,F_k$) define su producción y sus precios, $Y_{j,t}$ y $P_{j,t}$ respectivamente. 
+
+Una vez que la producción y las ventas han ocurrido, las empresas en el sector-K conocen sus ventas totales $Q_{j}= \min (Y_{j,t}^s,Y_{j,t}^d)$, donde $Y_{j,t}^d$ es la demanda actual y $Y_{j,t}^s= Y_{j,t} +Y_{j,t}^k$ es la oferta total de bienes de capital de la empresa $j$, la suma de la producción total en el periodo $t$ y los inventorios disponibles en ese momento. El cambio en invetarios en el periodo $t$ es igual a la diferencia entre el nivel de inventarios al final del periodo $t$, $Y_{j,t}^s - Y_{j,t}^d$ y el nivel de inventarios disponibles al inicio del periodo $t$, $Y_{j,t}^k$
+
+\begin{equation}
+\Delta_{j,t} = Y_{j,t}^s-Y_{j,t}^d-Y_{j,t}^k
+\end{equation}
+
+Que puede ser reescrita como:
+
+\begin{equation}
+\Delta_{j,t} = Y_{j,t}-Y_{j,t}^d
+\end{equation}
+
+Es decir, el cambio en inventarios mide el error de pronóstico de la empresas. Agregando la tasa de depreciación, la regla del movimiento de los inventarios sería :
+
+\begin{equation}
+Y_{j,t+1}^k = (Y_{j,t}^k+ \Delta_{j,t}) (1-\delta^k)
+\end{equation}
+
+donde $\delta^k$ es la tasa de depreciación de los inventarios. Si la demanda es mayor que la producción, la empresa puede satisfacer el exceso de demanda con los inventarios hasta un límite representado por el stock total de inventarios acumulados. Si el exceso de demanda es mayor que este umbral, habrá una cola de empresas con demanda no satisfecha.
+
+El cambio actual en los invetarios estará dado por :
+
+\begin{equation}
+\Delta_{j,t+1}^k= Y_{j,t+1}^k -Y_{j,t}^k= \Delta_{j,t}(1-\delta^k)-\delta^k Y_{j,t}^k
+\end{equation}
+
+\vspace{.2cm}
+\textbf{Definición de los precios}
+\vspace{.2cm}
+
+Para definir su precio, las empresas en el sector-K se basan en los precios de sus competidores y en los cambios de inventarios. Las empresas siguen la siguiente regla adaptativa para establecer su precio:
+
+ \begin{equation}
+  P_{j,t+1} =
+    \begin{cases}
+   	  P_{j,t} (1+\eta_{j,t+1}) & \text{si $\Delta_{j,t} \leq 0$ y $P_{j,t} < P_{k,t}$}\\
+      P_{j,t} (1 - \eta_{j,t+1}) & \text{si $\Delta_{j,t} > 0$ y $P_{j,t} > P_{k,t}$}
+    \end{cases}       
+\end{equation}
+
+donde $\eta_{j,t+1}	\in (0,0.1)$.
+
+\vspace{.2cm}
+\textbf{Definición de la producción}
+\vspace{.2cm}
+
+Dado que las empresas en el sector-K puede satisfacer una parte de la demanda excedente usando los inventarios acumulados, el ajuste de la producción es distinto a de las empresas de consumo. Considerando invetarios, el ajuste estaría dado por $Y_{j,t+1}^*+Y_{j,t+1}^k= Y_{j,t+1}^e$. Así, la regla para ajustar la producción sería:
+
+\begin{equation}
+  Y_{j,t+1}^* =
+    \begin{cases}
+   	  Y_{j,t} + \rho (- \Delta_{j,t})- Y_{j,t+1}^k  & \text{si $\Delta_{j,t} \leq 0$ y $P_{j,t} > P_{k,t}$}\\
+Y_{j,t} - \rho \Delta_{j,t}- Y_{j,t+1}^k  & \text{si $\Delta_{j,t} > 0$ y $P_{j,t} < P_{k,t}$}
+    \end{cases}  
+\end{equation}
+
+Donde $\rho \in (0,1)$.
+
+Si $\Delta_{j,t} <0$, y el precio individual es más alto que el precio promedio, las empresas revisan sos expectativas de demanda a la alza. El incremento en la expectativa de la demanda no se traslada en un incremento en la expectativa de producción de la misma magnitud dado que las empresas en el sector-K pueden satisfacer una parte del incremento de la demanda con sus inventarios acumulados. 
+
+Si $\Delta_{j,t} >0$, y el precio individual es menor que el precio promedio, las empresas revisan sos expectativas de demanda a la baja. La reducción de la demanda esperada se traduce en una reducción de la producción mayor que la reducción de la demanda.
+
+\vspace{.2cm}
+\textbf{Protocolo de búsqueda y matching}
+\vspace{.2cm}
+
+Cada empresa en el sector moderno de bienes de consumo elige aleatoriamente una cantidad $Z_k$ de empresas de sector-K y las ordena de acuerdo al precio de venta y los bienes de capital demandados comenzando con la empresa con el menor precio. Este mecanismo de búsqueda y matching implica que algunas empresas de consumo tendrán una demanda insatisfecha mientras que algunas empresas de bienes de capital tendrán inventarios involuntarios.
+
+\vspace{.2cm}
+\textbf{Producción y requerimientor laborales}
+\vspace{.2cm}
+ 
+La empresa $j$ produce $Y_{j,t}$ mediante una tecnología linear que utiliza sólo trabajo:
+
+\begin{equation}
+Y_{j,t}= \alpha^k N_{j,t}
+\end{equation}
+
+donde $\alpha^k$ es la productividad laboral en el sector-K, la cual es exógena, constante y uniforme dentro de las empresas de este sector. El empleo deseado estaría dado por:
+
+\begin{equation}
+N_{j,t+1}^*=\dfrac{Y_{j,t+1}^*}{\alpha^k}
+\end{equation}
+
+Dado que el trabajo es un bien homogéneo, tanto la empresas en el sector-K como en el sector-C compiten por los mismos trabajadores. 
+
+\subsubsection{Hogares}
+
+\vspace{.2cm}
+\textbf{Salario de Reserva}
+\vspace{.2cm}
+ 
+La heurística adaptativa que siguen los trabajadores  para establecer su salario de reserva es que si durante el cuatro periodos antes han estado desempleados durante más de dos trimestres, reducen el salario solicitado en una cantidad aleatoria $FN$. En el caso contrario, aumentan su salario solicitado en dicha cantidad aleatoria, siempre que la tasa agregada de desempleo en el período anterior ($u_{t-1}$) sea lo suficientemente baja. Esta última condición pretende imitar la evolución endógena del poder de negociación de los trabajadores en relación con dinámica del empleo:
+
+\begin{equation}
+w_{i}^{d,t} =
+\begin{cases}
+       w_{ht-1}^D(1-FN)   & \; \text{si $\; \sum_{n=1}^4 u_{ht-n} > 2$} \\
+       w_{ht-1}^D(1+FN) & \; \text{si $\; \sum_{n=1}^4 u_{ht-n} \leq 2 \; y \; u_{t-1} \leq \nu $} 
+
+\end{cases}
+\end{equation}
+
+donde $u_{ht}=1$ si el hogar se encuentra empleado en $t$, y 0 en caso contrario.
+
+\vspace{.2cm}
+\textbf{Consumo}
+\vspace{.2cm}
+ 
+ 
+Los trabajadores consumen con propensiones fijas $\alpha_1$ y $\alpha_2$ a partir del ingreso real disponible esperado y la riqueza real esperada. Dado que los trabajadores establecen su demanda real antes de interactuar con las empresas de consumo, formulan expectativas sobre el precios de los bienes de consumo, $p_{ht}^e$:
+
+\begin{equation}
+c_{ht}^D = \alpha_1 \dfrac{NI_{ht}}{p_{ht}^e} + \alpha_2 \dfrac{NW_{ht}}{p_{ht}^e}  
+\end{equation}
+
+donde el ingreso bruto nominal está dado por $w_{ht}+i_{bt-1}^dD_{ht-1}+Div_{ht}$ si el trabajador está empleado. 
+
+Los hogares pagan impuestos sobre la renta con una tasa impositiva fija $\tau_i$. 
+Los trabajadores desempleados reciben un subsidio exento de impuestos del gobierno definido como una parte del salario promedio, $\omega$.
+
+El capital deseado de la empresa de consumo e sigual al producto esperado(5) entre $\kappa$, es decir, 5. La tasa de ocupación de la capacidad sería igual a $\omega = \frac{5}{50}=0.1$
+
+
+\scriptsize
+\newgeometry{hmargin=.3in,vmargin=0.1in} 
+\begin{landscape}
+\begin{longtable}{@{\extracolsep{3pt}}l p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}  p{3.5cm} p{3.5cm} p{3.5cm}}  
+\caption{Agentes del modelo}\label{tab:agentes}\\    %%%%<===
+
+
+\\[-1.8ex]\hline 
+\endhead
+\hline \\[-1.8ex] 
+ \textbf{Concepto} & \multicolumn{1}{c} {\textbf{Hogares}} & \multicolumn{3}{c} {\textbf{Empresas}} & \multicolumn{1}{c} {\textbf{Bancos}}  & \multicolumn{1}{c} {\textbf{Gobierno}} \\ 
+  \cline{3-5} \\
+  \textbf{} & \multicolumn{1}{c} {\textbf{}} & \multicolumn{1}{c} {\textbf{Capital}} &\multicolumn{2}{c} {\textbf{Bienes Consumo}} & \multicolumn{1}{c} {\textbf{}}  & \multicolumn{1}{c} {\textbf{}} \\ \cline{4-5} \\
+  \textbf{} & \multicolumn{1}{c} {\textbf{}} & \multicolumn{1}{c} {\textbf{}} &\multicolumn{1}{c} {\textbf{Sector formal}} &\multicolumn{1}{c} {\textbf{Sector informal}} & \multicolumn{1}{c} {\textbf{}}  & \multicolumn{1}{c} {\textbf{•}} \\ 
+\hline \\[-1ex] 
+
+Rol en el modelo & Venden su trabajo a las empresas y reciben salarios, consumen
+y ahorran en forma de depósitos bancarios. Los hogares pagan impuestos
+sobre sus ingresos brutos. & Producen un bien de capital homogéneo úni-
+camente usando trabajo. Solicitan préstamos a los bancos para financiar la producción y la inversión. Las ganancias retenidas se mantienen en forma de depósitos bancarios. & Producen un bien de consumo homogéneo utilizando mano de obra y bienes de capital fabricados por empresas
+de capital. Solicitan préstamos a los bancos para financiar la producción y la inversión. & Producen un bien de consumo homogéneo únicamente con trabajo. & Recaudan depósitos de los hogares y empresas. Otorgan préstamos a las empresas. & Cobra impuestos y consume a las empresas de bienes de consumo.\\
+
+Variables de estado & 
+%%%% HOGARES
+\par \textbf{Salario} \texttt{[numérico]}
+\par \textbf{Empleado} \texttt{[booleano]}
+\par \textbf{Ingreso bruto} \texttt{[numérico]}
+\par \textbf{Ingreso disponible} \texttt{[numérico]}
+\par \textbf{Proveedor} \texttt{[numérico]}
+\par \textbf{Propensión consumo al ingreso} \texttt{[numérico]}
+\par \textbf{Propensión consumo a la riqueza} \texttt{[numérico]}
+\par \textbf{Demanda real deseada} \texttt{[numérico]}
+\par \textbf{Demanda deseada} \texttt{[numérico]}
+\par \textbf{Consumo factible} \texttt{[numérico]}
+\par \textbf{Consumo real factible} \texttt{[numérico]}
+\par \textbf{Consumo real efectivo} \texttt{[numérico]}
+\par \textbf{Ingreso real} \texttt{[numérico]}
+\par \textbf{Riqueza real} \texttt{[numérico]}
+\par \textbf{Ahorro} \texttt{[numérico]}
+\par \textbf{Cuentas bancarias} \texttt{[numérico]}
+& 
+%%%%% Empresas Capital
+\par \textbf{Precio} \texttt{[numérico]}
+\par \textbf{Capital}  \texttt{[numérico]}
+\par \textbf{Capital deseado} \texttt{[numérico]}
+\par \textbf{Empleo deseado} \texttt{[numérico]}
+\par \textbf{Demanda de hogares} \texttt{[numérico]}
+\par \textbf{Demanda de gobierno} \texttt{[numérico]}
+\par \textbf{Cash} \texttt{[numérico]}
+\par \textbf{Proveedor} \texttt{[numérico]}
+\par \textbf{Precio proveedor} \texttt{[numérico]}
+\par \textbf{Empleados} \texttt{[hogares]}
+\par \textbf{Nómina} \texttt{[numérico]}
+\par \textbf{Producto} \texttt{[numérico]}
+\par \textbf{Producto esperado} \texttt{[numérico]}
+\par \textbf{Inventarios} \texttt{[numérico]}
+\par \textbf{Tasa de utilización} \texttt{[numérico]}
+\par \textbf{Ganancia} \texttt{[numérico]}
+\par \textbf{Inversión} \texttt{[numérico]}
+\par \textbf{Cambio actual en inventarios} \texttt{[numérico]}
+\par \textbf{Cambio acumulado en inventarios} \texttt{[numérico]}
+\par \textbf{Cuentas bancarias} \texttt{[numérico]}
+
+&
+%%%%% Empresas Consumo -Formal
+\par \textbf{Precio} \texttt{[numérico]}
+\par \textbf{Capital}  \texttt{[numérico]}
+\par \textbf{Capital deseado} \texttt{[numérico]}
+\par \textbf{Empleo deseado} \texttt{[numérico]}
+\par \textbf{Demanda de hogares} \texttt{[numérico]}
+\par \textbf{Demanda de gobierno} \texttt{[numérico]}
+\par \textbf{Cash} \texttt{[numérico]}
+\par \textbf{Proveedor} \texttt{[numérico]}
+\par \textbf{Precio proveedor} \texttt{[numérico]}
+\par \textbf{Empleados} \texttt{[hogar]}
+\par \textbf{Nómina} \texttt{[numérico]}
+\par \textbf{Producto} \texttt{[numérico]}
+\par \textbf{Producto esperado} \texttt{[numérico]}
+\par \textbf{Inventarios} \texttt{[numérico]}
+\par \textbf{Tasa de utilización} \texttt{[numérico]}
+\par \textbf{Ganancia} \texttt{[numérico]}
+\par \textbf{Inversión} \texttt{[numérico]}
+\par \textbf{Cuentas bancarias} \texttt{[cuenta]}
+
+&
+%%%%% Empresas Consumo - Subsistencia
+
+&
+%%%%% Empresas Bancos
+\par \textbf{Pasivos} \texttt{[numérico]}
+\par \textbf{Activos} \texttt{[numérico]}
+\par \textbf{Capital} \texttt{[numérico]}
+\par \textbf{Créditos} \texttt{[dict:créditos]}
+\par \textbf{Depósitos} \texttt{[dict:depósitos]}
+\par \textbf{Tasa de interés} \texttt{[numérico]}
+&
+%%%%% Gobierno
+\par \textbf{Gasto real} \texttt{[numérico]}
+\par \textbf{Gasto real efectivo} \texttt{[numérico]}
+\par \textbf{Gasto nominal}  \texttt{[numérico]}
+\par \textbf{Gasto nominal efectivo} \texttt{[numérico]}
+\par \textbf{Impuestos a las ganancias} \texttt{[numérico]}
+\par \textbf{Impuestos al ingreso} \texttt{[numérico]}
+\par \textbf{Balance} \texttt{[numérico]}
+ \\
+							
+\hline 
+\hline \\[-1.8ex] 
+
+\end{longtable} 
+\end{landscape}
+
+\restoregeometry
+\scriptsize
+\newgeometry{hmargin=.9in,vmargin=0.6in} 
+\subsection{Parámetros y condiciones iniciales}
+\begin{table}[ht]
+\caption{Parámetros iniciales}
+\begin{tabular}{|l|c|}
+\hline 
+Parámetro & Valor \\
+\hline 
+	Simulaciones & 50 \\
+   Número de periodos & 300 \\ 
+  Número de hogares & 1000\\ 
+  Número de empresas de bienes de consumo & 100\\ 
+  Número de empreas de bienes de capital & 20\\ 
+  Propensión a consumir sobre el ingreso & 0.8\\ 
+  Propensión a consumir sobre la riqueza & 0.2\\ 
+  Tasa de impuestos & 0.2\\ 
+  Gasto real del gobierno & 100\\ 
+  Salarios & 2\\ 
+   Capital & 200\\ 
+   Costo de ajuste & 0.25\\ 
+   Peso de cada periodo en la depreciación & 0.2\\ 
+   Tasa de depreciación de las empresas de consumo & 0.1\\ 
+   Tasa de depreciación de las empresas de capital & 0.1\\ 
+   Sensibilidad de la expectativa de producción & 0.05\\ 
+   Tasa mínima de inventarios deseados & 0\\ 
+   Tasa máxima de inventarios deseados & 0\\ 
+   Productividad laboral  & 0.4-1.0 (0.2)\\ 
+   Productividad del capital & 0.5\\ 
+   Tasa de utilización de la capacidad de largo plazo & 0.85\\ 
+   Precios bienes de consumo & 2\\ 
+   Markup & 0.2\\ 
+   Markup mínimo & 0.15\\ 
+   Markup máximo & 0.25\\ 
+   Tasa de interés anual & 0.1\\ 
+   Tasa de interés objetivo del BC & 0.05\\ 
+   Reserve ratio & 0.06\\ 
+   Capital inicial & 300\\ 
+   Años a pagar el crédito & 3\\ 
+   Precio promedio de las empresas de consumo & 0\\ 
+   Precio promedio de las empresas de capital & 0\\ 
+   Número de empresas de capital visitadas & 2\\ 
+
+\hline 
+\end{tabular}
+  \label{Tab:Tcr}
+\end{table}
+\restoregeometry
+
+\pagebreak
+\section{Limitaciones y alcances del modelo}
+Una de las principales carencias del modelo es que no se verificó el sistema contable de los balances de los agentes del modelo. Esto es importante pues da un seguimiento coherente de las transacciones reales y financieras realizadas por los agentes y de los flujos de los stocks financieros y reales que sustentan, pero por los tiempos y alcances del proyecto, no se atendieron.
+
+Por otra parte, en el comportamiento de los bancos no hay restricciones a la emisión de crédito y no hacen una evaluación de las empresas que pueden ser sujetas de crédito.
+
+\footnotesize
+\bibliographystyle{apalike}
+\bibliography{bib_toy_model} % replace by the name of your .bib file
+
+\end{document}
